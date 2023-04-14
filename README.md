@@ -3,7 +3,7 @@ Automatically trades popular options strategies
 
 ## System Overview
 
-After calculating the short-term (5-day) and long-term (14-day) exponential moving averages (EMA) of the underlying asset's price. It then finds a trend based on the relationship between the EMAs:
+After calculating the short-term (5-day) and long-term (14-day) exponential moving averages (EMA) of the underlying asset's price, the system finds a trend based on the relationship between the EMAs:
 
 * If the short-term EMA crosses above the long-term EMA, it indicates a BULLISH trend
 * If the short-term EMA crosses below the long-term EMA, it indicates a BEARISH trend
@@ -16,10 +16,10 @@ The chosen strategy is based on the determined trend and the average implied vol
   - If the average implied volatility is low, the system selects a Bull Call Spread strategy
 * If the trend is bearish:
   - If the average implied volatility is high (greater than 0.3 in this example), the function selects a Long Put strategy
-  - If the average implied volatility is low, the function selects a Bear Put Spread strategy
+  - If the average implied volatility is low, the system selects a Bear Put Spread strategy
 * If the trend is neutral:
-  - If the average implied volatility is high (greater than 0.3 in this example), the function selects a Long Straddle strategy
-  - If the average implied volatility is low, the function selects a Calendar Spread strategy
+  - If the average implied volatility is high (greater than 0.3 in this example), the system selects a Long Straddle strategy
+  - If the average implied volatility is low, the system selects a Calendar Spread strategy
 
 Currently, the system's approach combines both trend-following (EMA crossover) and a volatility-based (implied volatility) decision-making process to choose the most appropriate options trading strategy.
 
