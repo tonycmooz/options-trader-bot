@@ -1,11 +1,10 @@
 # Automated Options Trading System
 Automatically trades popular options strategies
 
-## Trading System Overview
-## (In development)
+## Trading System Overview (In development)
 An automated options trading system and strategy that aims to maximize profit and minimize risk by incorporating the techniques:
 
-### Diversificatio
+### Diversification
 
 Allocate capital across various options strategies to diversify risk, including both directional and non-directional strategies. This can be achieved by trading different types of options (e.g., calls, puts, European, American), different underlying assets (e.g., stocks, ETFs, indexes), and various expiration dates.
 
