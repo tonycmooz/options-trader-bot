@@ -28,6 +28,7 @@ def get_historical_prices(symbol, interval, span):
     df = df.astype(float)
     return df
 
+
 def get_option_chain(symbol, expiration_date=None):
     if expiration_date:
         return r.options.get_options_for_stock(symbol, expirationDate=expiration_date)
@@ -37,6 +38,7 @@ def get_option_chain(symbol, expiration_date=None):
 ## TODO
 def get_volatility_data(symbol):
     return r.options.get_stock_option_market_data(symbol)
+
 
 def place_order(option_id, order_type, quantity, price=None):
     if order_type == 'limit':
@@ -102,6 +104,37 @@ def get_option_id(options, target_strike_price):
 
     return None
 
+
+def long_call_strategy(symbol, expiration_date):
+    # Get option chain and ATM strike price
+    option_chain = get_option_chain(symbol, expiration_date)
+    call_options = [option for option in option_chain if option['type'] == 'call']
+    atm_strike_price = select_atm_strike_price(call_options)
+
+    # Find the ATM call option
+    atm_call_option = [option for option in call_options if float(option['strike_price']) == atm_strike_price][0]
+
+    # Execute the trade (buy 1 call option)
+    logging.info(f"Buying 1 ATM call option for {symbol} with strike price {atm_strike_price} and expiration {expiration_date}")
+    option_id = atm_call_option['id']
+    r.options.order_buy_to_open(option_id, 1, 'limit', atm_call_option['ask_price'])
+
+
+def long_put_strategy(symbol, expiration_date):
+    # Get option chain and ATM strike price
+    option_chain = get_option_chain(symbol, expiration_date)
+    put_options = [option for option in option_chain if option['type'] == 'put']
+    atm_strike_price = select_atm_strike_price(put_options)
+
+    # Find the ATM put option
+    atm_put_option = [option for option in put_options if float(option['strike_price']) == atm_strike_price][0]
+
+    # Execute the trade (buy 1 put option)
+    logging.info(f"Buying 1 ATM put option for {symbol} with strike price {atm_strike_price} and expiration {expiration_date}")
+    option_id = atm_put_option['id']
+    r.options.order_buy_to_open(option_id, 1, 'limit', atm_put_option['ask_price'])
+
+
 def bull_call_spread(symbol, expiration_date):
     """
     This strategy involves simultaneously buying and selling call options with 
@@ -124,6 +157,7 @@ def bull_call_spread(symbol, expiration_date):
     higher_option_id = get_option_id(call_options, higher_strike_price)
     sell_higher_order = place_order(higher_option_id, 'sell', 1)
     logging.info(f"Sell call option with a higher strike price ({higher_strike_price}) on {symbol} - Order ID: {sell_higher_order['id']}")
+
 
 def bear_put_spread(symbol, expiration_date):
     """
@@ -149,6 +183,7 @@ def bear_put_spread(symbol, expiration_date):
     lower_option_id = get_option_id(put_options, lower_strike_price)
     sell_order = place_order(lower_option_id, 'sell', 1)
     logging.info(f"Sell put option with a lower strike price ({lower_strike_price}) on {symbol} - Order ID: {sell_order['id']}")
+
 
 def select_atm_strike_price(options):
     """
@@ -179,6 +214,7 @@ def select_atm_strike_price(options):
 
     return closest_strike_price
 
+
 def bullish_calendar_spread_calls(symbol, near_expiration_date, far_expiration_date):
     """
     A Calendar Spread strategy involves buying and selling options with 
@@ -206,6 +242,7 @@ def bullish_calendar_spread_calls(symbol, near_expiration_date, far_expiration_d
     buy_far_order = place_order(far_option_id, 'buy', 1)
     logging.info(f"Buy longer-term call option with strike price ({strike_price}) on {symbol} - Order ID: {buy_far_order['id']}")
 
+
 def long_straddle(symbol, expiration_date):
     """
     A Straddle strategy involves buying a call option and a put option with 
@@ -231,8 +268,10 @@ def long_straddle(symbol, expiration_date):
     buy_put_order = place_order(put_option_id, 'buy', 1)
     logging.info(f"Buy put option with strike price ({strike_price}) on {symbol} - Order ID: {buy_put_order['id']}")
 
+
 def exponential_moving_average(data, window):
     return data.ewm(span=window, adjust=False).mean()
+
 
 def main(symbol, expiration_date, price_history_length=14):
     """
