@@ -230,3 +230,122 @@ def long_straddle(symbol, expiration_date):
     put_option_id = get_option_id(put_options, strike_price)
     buy_put_order = place_order(put_option_id, 'buy', 1)
     logging.info(f"Buy put option with strike price ({strike_price}) on {symbol} - Order ID: {buy_put_order['id']}")
+
+def exponential_moving_average(data, window):
+    return data.ewm(span=window, adjust=False).mean()
+
+def main(symbol, expiration_date, price_history_length=14):
+    """
+    The trading program executes by analyzing factors such as the underlying 
+    asset's price movement, implied volatility, market sentiment, and technical indicators.
+
+    The following approach chooses a strategy based on the exponential moving average (EMA)
+    of the underlying asset's price.
+    """
+    # Get price history
+    price_history = r.stocks.get_stock_historicals(symbol, interval='day', span=f'{price_history_length}d')
+
+    # Calculate moving averages
+    closing_prices = pd.Series([float(record['close_price']) for record in price_history])
+    short_ema = exponential_moving_average(closing_prices, 5)
+    long_ema = exponential_moving_average(closing_prices, 14)
+
+    # Get option chain and ATM strike price
+    option_chain = get_option_chain(symbol, expiration_date)
+    call_options = [option for option in option_chain if option['type'] == 'call']
+    atm_strike_price = select_atm_strike_price(call_options)
+
+    # Calculate the average implied volatility of ATM options
+    atm_call_option = [option for option in call_options if float(option['strike_price']) == atm_strike_price][0]
+    atm_put_option = [option for option in option_chain if option['type'] == 'put' and float(option['strike_price']) == atm_strike_price][0]
+    avg_implied_volatility = (float(atm_call_option['implied_volatility']) + float(atm_put_option['implied_volatility'])) / 2
+
+    # Determine the trend based on EMA crossover
+    trend = None
+    if short_ema.iloc[-1] > long_ema.iloc[-1] and short_ema.iloc[-2] <= long_ema.iloc[-2]:
+        trend = "bullish"
+    elif short_ema.iloc[-1] < long_ema.iloc[-1] and short_ema.iloc[-2] >= long_ema.iloc[-2]:
+        trend = "bearish"
+    else:
+        trend = "neutral"
+
+    # Choose a strategy based on the trend and implied volatility
+    if trend == "bullish":
+        if avg_implied_volatility > 0.3:
+            logging.info("Executing Long Call strategy.")
+            long_call_strategy(symbol, expiration_date)
+        else:
+            logging.info("Executing Bull Call Spread strategy.")
+            bull_call_spread(symbol, expiration_date)
+    elif trend == "bearish":
+        if avg_implied_volatility > 0.3:
+            logging.info("Executing Long Put strategy.")
+            long_put_strategy(symbol, expiration_date)
+        else:
+            logging.info("Executing Bear Put Spread strategy.")
+            bear_put_spread(symbol, expiration_date)
+    else:
+        if avg_implied_volatility > 0.3:
+            logging.info("Executing Long Straddle strategy.")
+            long_straddle(symbol, expiration_date)
+        else:
+            logging.info("Executing Calendar Spread strategy.")
+            bullish_calendar_spread_calls(symbol, expiration_date, expiration_date + timedelta(days=30))
+
+
+# def main(symbol, expiration_date, price_history_length=14):
+#     """
+#     Uses SMA (Simple Moving Average Crossover)
+#     """
+
+#     # Get price history
+#     price_history = r.stocks.get_stock_historicals(symbol, interval='day', span=f'{price_history_length}d')
+
+#     # Calculate moving averages
+#     closing_prices = [float(record['close_price']) for record in price_history]
+#     short_moving_average = np.mean(closing_prices[-5:])
+#     long_moving_average = np.mean(closing_prices)
+
+#     # Get option chain and ATM strike price
+#     option_chain = get_option_chain(symbol, expiration_date)
+#     call_options = [option for option in option_chain if option['type'] == 'call']
+#     atm_strike_price = select_atm_strike_price(call_options)
+
+#     # Calculate the average implied volatility of ATM options
+#     atm_call_option = [option for option in call_options if float(option['strike_price']) == atm_strike_price][0]
+#     atm_put_option = [option for option in option_chain if option['type'] == 'put' and float(option['strike_price']) == atm_strike_price][0]
+#     avg_implied_volatility = (float(atm_call_option['implied_volatility']) + float(atm_put_option['implied_volatility'])) / 2
+
+#     # Choose a strategy based on moving averages and implied volatility
+#     if short_moving_average > long_moving_average:
+#         # Bullish trend
+#         if avg_implied_volatility > 0.3:
+#             # High implied volatility, choose Long Call strategy
+#             logging.info("Executing Long Call strategy.")
+#             long_call_strategy(symbol, expiration_date)
+#         else:
+#             # Low implied volatility, choose Bull Call Spread strategy
+#             logging.info("Executing Bull Call Spread strategy.")
+#             bull_call_spread(symbol, expiration_date)
+#     elif short_moving_average < long_moving_average:
+#         # Bearish trend
+#         if avg_implied_volatility > 0.3:
+#             # High implied volatility, choose Long Put strategy
+#             logging.info("Executing Long Put strategy.")
+#             long_put_strategy(symbol, expiration_date)
+#         else:
+#             # Low implied volatility, choose Bear Put Spread strategy
+#             logging.info("Executing Bear Put Spread strategy.")
+#             bear_put_spread(symbol, expiration_date)
+#     else:
+#         # Neutral trend, choose Straddle or Calendar Spread based on implied volatility
+#         if avg_implied_volatility > 0.3:
+#             logging.info("Executing Long Straddle strategy.")
+#             long_straddle(symbol, expiration_date)
+#         else:
+#             logging.info("Executing Calendar Spread strategy.")
+#             bullish_calendar_spread_calls(symbol, expiration_date, expiration_date + timedelta(days=30))
+
+
+if __name__ == '__main__':
+    main()

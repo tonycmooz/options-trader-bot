@@ -1,8 +1,30 @@
 # Automated Options Trading System
 Automatically trades popular options strategies
 
-## Trading System Overview (In development)
-An automated options trading system and strategy that aims to maximize profit and minimize risk by incorporating the techniques:
+## System Overview
+
+After calculating the short-term (5-day) and long-term (14-day) exponential moving averages (EMA) of the underlying asset's price. It then finds a trend based on the relationship between the EMAs:
+
+* If the short-term EMA crosses above the long-term EMA, it indicates a BULLISH trend
+* If the short-term EMA crosses below the long-term EMA, it indicates a BEARISH trend
+* If there is no crossover, it indicates a NEUTRAL trend
+
+The chosen strategy is based on the determined trend and the average implied volatility of the At-the-Money options.
+
+* If the trend is bullish:
+  - If the average implied volatility is high (greater than 0.3 in this example), the system selects a Long Call strategy
+  - If the average implied volatility is low, the system selects a Bull Call Spread strategy
+* If the trend is bearish:
+  - If the average implied volatility is high (greater than 0.3 in this example), the function selects a Long Put strategy
+  - If the average implied volatility is low, the function selects a Bear Put Spread strategy
+* If the trend is neutral:
+  - If the average implied volatility is high (greater than 0.3 in this example), the function selects a Long Straddle strategy
+  - If the average implied volatility is low, the function selects a Calendar Spread strategy
+
+Currently, the system's approach combines both trend-following (EMA crossover) and a volatility-based (implied volatility) decision-making process to choose the most appropriate options trading strategy.
+
+## Goals of the Trading System (In development)
+An automated options trading system and strategy that aims to maximize profit and minimize risk by incorporating the following techniques:
 
 ### Diversification
 
